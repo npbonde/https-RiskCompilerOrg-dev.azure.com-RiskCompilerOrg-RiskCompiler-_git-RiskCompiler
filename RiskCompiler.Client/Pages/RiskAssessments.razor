@@ -1,0 +1,302 @@
+﻿@page "/RiskAssessments"
+
+@using RiskCompiler.Shared.DTO
+@using RiskCompiler.Shared.GrpcServices
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Diagrams
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Popups
+@using System.Collections.ObjectModel
+
+@inject IRiskCompilerGrpcService grpcService
+
+<Document Title="RiskCompiler" />
+
+@if (dataSource == null)
+{
+    <p>Loading</p>
+}
+else
+{
+    <div class="myDiv" style="display: flex; height: 80vh; border: 1px solid black;">
+        <SfDiagram @ref="@diagram" id="diagram" Width="100%" Height="100%" NodeDefaults="@NodeDefaults" ConnectorDefaults="@ConnectorDefaults" Layout="@LayoutValue" Constraints="@DiagramConstraints">
+            <DiagramDataSource Id="RiskAssessmentGuid" ParentId="ParentGuids" DataMapSettings="@datamap" DataSource="@dataSource"></DiagramDataSource>
+            <DiagramSnapSettings Constraints="@SnapConstraints.None"></DiagramSnapSettings>
+            <DiagramScrollSettings HorizontalOffset="50" VerticalOffset="30" CanAutoScroll="false" ScrollLimit="ScrollLimit.Diagram"></DiagramScrollSettings>
+            <DiagramContextMenuSettings Show="true" Items="@contextMenuItemModels" ShowCustomMenuOnly="true"></DiagramContextMenuSettings>
+            <DiagramEvents OnContextMenuOpen="@OnContextMenuOpen" ContextMenuItemClicked="@ContextMenuItemClicked"></DiagramEvents>
+        </SfDiagram>
+
+        <SfDialog Width="350px" @bind-Visible="@NameDialogIsVisible" ShowCloseIcon="true" IsModal="true">
+            <DialogEvents Opened="NameDialogOpened" OnClose="NameDialogOnBeforeDialogClose" />
+            <DialogTemplates>
+                <Header>Create a derived risk assessment</Header>
+                <Content>
+                    <SfTextBox @ref="NameDialogTextboxObj" type="text" @bind-Value="@NameDialogTextboxValue" Placeholder="Risk assessment title" />
+                </Content>
+            </DialogTemplates>
+            <DialogButtons>
+                <DialogButton OnClick="@NameDialogCreateClick">
+                    <DialogButtonModel Content="Create" IsPrimary="true"></DialogButtonModel>
+                </DialogButton>
+                <DialogButton OnClick="@NameDialogCancelClick">
+                    <DialogButtonModel Content="Cancel"></DialogButtonModel>
+                </DialogButton>
+            </DialogButtons>
+        </SfDialog>
+    </div>
+}
+
+@code {
+    class DataModel
+    {
+        private RiskAssessmentDto _riskAssessmentDto;
+
+        public DataModel(RiskAssessmentDto riskAssessmentDto)
+        {
+            _riskAssessmentDto = riskAssessmentDto;
+        }
+
+        public string? Title { get => _riskAssessmentDto.Title; }
+
+        public string? Desciption { get => _riskAssessmentDto.Description; }
+
+        public string? MyTooltip { get => _riskAssessmentDto.RiskAssessmentGuid.ToString() + ": " + _riskAssessmentDto.Title + (_riskAssessmentDto.Description != null && _riskAssessmentDto.Description.Length > 0 ? " ------------ " + _riskAssessmentDto.Description : null); }
+
+        public string RiskAssessmentGuid { get => _riskAssessmentDto.RiskAssessmentGuid.ToString(); }
+
+        public string[]? ParentGuids { get => _riskAssessmentDto.ParentGuids?.Count > 0 ? _riskAssessmentDto.ParentGuids.Select(pg => pg.ToString()).ToArray() : null; }
+
+        public string fillColor { get => _riskAssessmentDto.IsCoreRiskAssessment ? "#e7704c" : "#14ad85"; }
+
+        public string border { get => _riskAssessmentDto.IsCoreRiskAssessment ? "#c15433" : "#c15433"; }
+    }
+
+    List<DataModel>? dataSource;
+    SfDiagram? diagram;
+    string? coreGuid;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("Before!");
+
+        ReturnValueDto returnValue = await grpcService.GetAllRiskAssessmentsAsync();
+
+        Console.WriteLine("After!");
+
+        if (returnValue.StatusCode == StatusCodeDto.OK && returnValue.Dto != null)
+        {
+            RiskAssessmentsDto riskAssessmentsDto = (RiskAssessmentsDto) returnValue.Dto;
+            coreGuid = riskAssessmentsDto.RiskAssessments?.Find(ra => ra.IsCoreRiskAssessment).RiskAssessmentGuid.ToString();
+            dataSource = riskAssessmentsDto.RiskAssessments?.Select(ra => new DataModel(ra)).ToList();
+        }
+        else
+        {
+            Console.WriteLine("Error detected");
+        }
+    }
+
+    List<DiagramDataMapSetting> datamap = new List<DiagramDataMapSetting>() {
+        new DiagramDataMapSetting() { Property = "Id", Field = "RiskAssessmentGuid" },
+        new DiagramDataMapSetting() { Property = "Style.Fill", Field = "fillColor" },
+        new DiagramDataMapSetting() { Property = "Style.StrokeColor", Field = "border" },
+        new DiagramDataMapSetting() { Property = "Annotations[0].Content", Field = "Title" },
+        new DiagramDataMapSetting() { Property = "Tooltip.Content", Field = "MyTooltip" }
+    };
+
+    DiagramConstraints DiagramConstraints = DiagramConstraints.Tooltip | DiagramConstraints.UserInteraction;
+    public int MyDiagramConstraints { get => (int)DiagramConstraints; }
+
+    DiagramLayout LayoutValue = new DiagramLayout()
+    {
+        Type = LayoutType.ComplexHierarchicalTree,
+        HorizontalSpacing = 40,
+        VerticalSpacing = 40,
+        Orientation = LayoutOrientation.LeftToRight,
+        Margin = new LayoutMargin() { Left = 20, Top = 20 },
+    };
+
+    DiagramNode NodeDefaults = new DiagramNode
+    {
+        Height = 80,
+        Width = 80,
+        Shape = new DiagramShape()
+        {
+            BasicShape = BasicShapes.Rectangle,
+            Type = Syncfusion.Blazor.Diagrams.Shapes.Text,
+            CornerRadius = 7
+        },
+        Annotations = new ObservableCollection<DiagramNodeAnnotation>()
+{
+            new DiagramNodeAnnotation()
+            {
+                //Margin = new NodeAnnotationMargin() { Bottom = 10, Top = 10 },
+                //HorizontalAlignment = HorizontalAlignment.Left,
+                //VerticalAlignment = VerticalAlignment.Top,
+                Style = new AnnotationStyle() { Color = "white", TextWrapping = TextWrap.Wrap, TextOverflow = TextOverflow.Clip },
+                Constraints = AnnotationConstraints.None
+            }
+        },
+        Tooltip = new NodeTooltip()
+        {
+            //Sets the position of the tooltip
+            Position = Syncfusion.Blazor.Popups.Position.BottomRight,
+            //Sets the tooltip position relative to the node
+            RelativeMode = TooltipRelativeMode.Object,
+            ShowTipPointer = true
+        },
+        Constraints = (NodeConstraints.Default | NodeConstraints.Tooltip | NodeConstraints.Select | NodeConstraints.HideThumbs) & ~NodeConstraints.InheritTooltip & ~NodeConstraints.Drag & ~NodeConstraints.Resize
+    };
+
+    DiagramConnector ConnectorDefaults = new DiagramConnector
+    {
+        Type = Syncfusion.Blazor.Diagrams.Segments.Orthogonal,
+        CornerRadius = 7,
+        TargetDecorator = new ConnectorTargetDecorator() { Width = 7, Height = 7 },
+        Style = new ConnectorShapeStyle() { StrokeColor = "#6d6d6d" }
+    };
+
+    List<ContextMenuItemModel> contextMenuItemModels = new List<ContextMenuItemModel>()
+{
+        //Context menu item for derive
+        new ContextMenuItemModel()
+        {
+            Text ="Select risk assessment",
+            Id="SelectRiskAssessment",
+            Target =".e-elementcontent",
+            IconCss ="e-select"
+        },
+        new ContextMenuItemModel()
+        {
+            Text ="Create a derived risk assessment",
+            Id="DeriveRiskAssessment",
+            Target =".e-elementcontent",
+            IconCss ="e-derive"
+        },
+        //Context menu item for delete
+        new ContextMenuItemModel()
+        {
+            Text ="Delete risk assessment",
+            Id="DeleteRiskAssessment",
+            Target=".e-elementcontent",
+            IconCss ="e-delete"
+        }
+    };
+
+    public void OnContextMenuOpen(DiagramBeforeMenuOpenEventArgs args)
+    {
+        List<object> items = new List<object>();
+
+        for (int i = 0; i < args.Items.Count; i++)
+        {
+            if (args.Items[i].Id == "DeleteRiskAssessment" &&
+                diagram?.SelectedItems.Nodes[0].Id == coreGuid)
+            {
+                items.Add(args.Items[i].Id);
+            }
+        }
+
+        args.HiddenItems = items;
+    }
+
+    public async Task ContextMenuItemClicked(DiagramMenuEventArgs args)
+    {
+        ReturnValueDto returnValue;
+
+        if (args.Item.Id == "DeriveRiskAssessment")
+        {
+            selectedGuid = Guid.Parse(diagram?.SelectedItems.Nodes[0].Id);
+            NameDialogIsVisible = true;
+        }
+        else if (args.Item.Id == "SelectRiskAssessment")
+        {
+            RiskAssessmentDto riskAssessmentDto = new RiskAssessmentDto()
+            {
+                RiskAssessmentGuid = Guid.Parse(diagram?.SelectedItems.Nodes[0].Id)
+            };
+
+            returnValue = await grpcService.SelectRiskAssessmentAsync(riskAssessmentDto);
+
+            if (returnValue.StatusCode != StatusCodeDto.OK)
+            {
+                Console.WriteLine("Error detected");
+            }
+        }
+        else if (args.Item.Id == "DeleteRiskAssessment")
+        {
+            RiskAssessmentDto riskAssessmentDto = new RiskAssessmentDto()
+            {
+                RiskAssessmentGuid = Guid.Parse(diagram?.SelectedItems.Nodes[0].Id)
+            };
+
+            returnValue = await grpcService.DeleteRiskAssessmentAsync(riskAssessmentDto);
+
+            if (returnValue.StatusCode != StatusCodeDto.OK)
+            {
+                Console.WriteLine("Error detected");
+            }
+        }
+        else
+        {
+            throw new InvalidOperationException("Unknown context menu action: >" + args.Item.Id + "<");
+        }
+
+        diagram?.ClearSelection();
+        StateHasChanged();
+    }
+
+    private Guid? selectedGuid { get; set; } = null;
+    private bool NameDialogIsVisible { get; set; } = false;
+    private SfTextBox? NameDialogTextboxObj { get; set; } = null;
+    private string? NameDialogTextboxValue = null;
+
+    private void NameDialogOpened(Syncfusion.Blazor.Popups.OpenEventArgs args)
+    {
+        NameDialogTextboxObj?.FocusIn();
+    }
+
+    private void NameDialogOnBeforeDialogClose(object arg)
+    {
+        NameDialogIsVisible = false;
+        StateHasChanged();
+
+        NameDialogTextboxValue = string.Empty;
+    }
+
+    private async Task NameDialogCreateClick()
+    {
+        if (selectedGuid != null)
+        {
+            string? title = NameDialogTextboxValue;
+
+            if (title != null && title != string.Empty)
+            {
+                NameDialogIsVisible = false;
+                StateHasChanged();
+
+                NameDialogTextboxValue = string.Empty;
+
+                RiskAssessmentDto riskAssessmentDto = new RiskAssessmentDto()
+                {
+                    Title = title,
+                    ParentGuids = new List<Guid>() { selectedGuid ?? Guid.Empty }
+                };
+
+                await grpcService.DeriveRiskAssessmentAsync(riskAssessmentDto);
+
+                await OnInitializedAsync();
+
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void NameDialogCancelClick()
+    {
+        NameDialogIsVisible = false;
+        StateHasChanged();
+
+        NameDialogTextboxValue = string.Empty;
+    }
+}

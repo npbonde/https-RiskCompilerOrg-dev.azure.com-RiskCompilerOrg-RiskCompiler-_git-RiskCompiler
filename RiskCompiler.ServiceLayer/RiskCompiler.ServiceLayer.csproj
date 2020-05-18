@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <WarningsAsErrors>NU1605;CS8600;CS8602</WarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="9.0.0" />
+    <PackageReference Include="HtmlSanitizer" Version="5.0.319" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RiskCompiler.DataAccessLayer\RiskCompiler.DataAccessLayer.csproj" />
+    <ProjectReference Include="..\RiskCompiler.Shared\RiskCompiler.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

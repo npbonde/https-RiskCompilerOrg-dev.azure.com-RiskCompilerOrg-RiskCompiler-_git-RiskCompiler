@@ -1,0 +1,87 @@
+﻿@page "/SfDiagramTest"
+@using Syncfusion.Blazor.Diagrams
+@using System.Collections.ObjectModel
+
+<SfDiagram @ref="@diagram" id="diagram" Width="100%" Height="580px" tool="@DiagramTools.ZoomPan" NodeDefaults="@NodeDefaults" ConnectorDefaults="@ConnectorDefault" Layout="@LayoutValue">
+    <DiagramDataSource Id="Name" ParentId="ReportingPerson" DataMapSettings="@datamap" DataSource="@dataSource"></DiagramDataSource>
+    <DiagramSnapSettings Constraints="@SnapConstraints.None"></DiagramSnapSettings>
+</SfDiagram>
+
+@code {
+    SfDiagram? diagram;
+    
+    List<DiagramDataMapSetting> datamap = new List<DiagramDataMapSetting>() {
+        new DiagramDataMapSetting() { Property = "Style.Fill", Field = "fillColor" },
+        new DiagramDataMapSetting() { Property = "Style.StrokeColor", Field = "border" },
+        new DiagramDataMapSetting() { Property = "Annotations[0].Content", Field = "Name" }
+    };
+
+    DiagramLayout LayoutValue = new DiagramLayout()
+    {
+        Type = LayoutType.ComplexHierarchicalTree,
+        HorizontalSpacing = 40,
+        VerticalSpacing = 40,
+        Orientation = LayoutOrientation.LeftToRight,
+        Margin = new LayoutMargin() { Left = 20, Top = 20 },
+    };
+
+    DiagramNode NodeDefaults = new DiagramNode
+    {
+        Height = 40,
+        Width = 80,
+        Shape = new DiagramShape()
+        { 
+            BasicShape = BasicShapes.Rectangle, Type = Syncfusion.Blazor.Diagrams.Shapes.Basic, CornerRadius = 7 
+        },
+        Annotations = new ObservableCollection<DiagramNodeAnnotation>()
+        {
+            new DiagramNodeAnnotation() { Style = new AnnotationStyle() { Color = "white", Bold = true }, }
+        }
+    };
+
+    DiagramConnector ConnectorDefault = new DiagramConnector
+    {
+        Type = Syncfusion.Blazor.Diagrams.Segments.Orthogonal,
+        CornerRadius = 7,
+        TargetDecorator = new ConnectorTargetDecorator() { Width = 7, Height = 7 },
+        Style = new ConnectorShapeStyle() { StrokeColor = "#6d6d6d" }
+
+    };
+    
+    public class DataModel
+    {
+        public string? Name;
+        public string? fillColor;
+        public string? border;
+        public string[]? ReportingPerson;
+    }
+    
+    public object dataSource = new List<object>()
+    {
+        new DataModel { Name = "node11", fillColor = "#e7704c", border = "#c15433" },
+        new DataModel {  Name = "node12", ReportingPerson = new string[]{ "node114" }, fillColor = "#efd46e", border = "#d6b123" },
+        new DataModel {  Name = "node13", ReportingPerson = new string[] { "node12" }, fillColor = "#58b087", border = "#16955e" },
+        new DataModel {  Name = "node14", ReportingPerson = new string[] { "node12" }, fillColor = "#58b087", border = "#16955e" },
+        new DataModel {  Name = "node15", ReportingPerson = new string[] { "node12" }, fillColor = "#58b087", border = "#16955e" },
+        new DataModel {  Name = "node16", fillColor = "#14ad85", border = "#c15433" },
+        new DataModel {  Name = "node17", ReportingPerson = new string[] { "node13", "node14", "node15" }, fillColor = "#659be5", border = "#3a6eb5" },
+        new DataModel {  Name = "node18", ReportingPerson = new string[] {}, fillColor = "#14ad85" },
+        new DataModel {  Name = "node19", ReportingPerson = new string[] { "node16", "node17", "node18" }, fillColor = "#8dbe6c", border = "#489911" },
+        new DataModel {  Name = "node110", ReportingPerson = new string[] { "node16", "node17", "node18" }, fillColor = "#8dbe6c", border = "#489911" },
+        new DataModel {  Name = "node111", ReportingPerson = new string[] { "node16", "node17", "node18", "node116" }, fillColor = "#8dbe6c", border = "#489911" },
+        new DataModel {  Name = "node21", fillColor = "#e7704c", border = "#c15433" },
+        new DataModel {  Name = "node22", ReportingPerson = new string[] { "node114" }, fillColor = "#efd46e", border = "#d6b123" },
+        new DataModel {  Name = "node23", ReportingPerson = new string[] { "node22" }, fillColor = "#58b087", border = "#16955e" },
+        new DataModel {  Name = "node24", ReportingPerson = new string[] { "node22" }, fillColor = "#58b087", border = "#16955e" },
+        new DataModel {  Name = "node25", ReportingPerson = new string[] { "node22" }, fillColor = "#58b087", border = "#16955e" },
+        new DataModel {  Name = "node26", ReportingPerson = new string[] {}, fillColor = "#14ad85" },
+        new DataModel {  Name = "node27", ReportingPerson = new string[] { "node23", "node24", "node25" }, fillColor = "#659be5", border = "#3a6eb5" },
+        new DataModel {  Name = "node28", ReportingPerson = new string[] {}, fillColor = "#14ad85" },
+        new DataModel {  Name = "node29", ReportingPerson = new string[] { "node26", "node27", "node28", "node116" }, fillColor = "#8dbe6c", border = "#489911" },
+        new DataModel {  Name = "node210", ReportingPerson = new string[] { "node26", "node27", "node28" }, fillColor = "#8dbe6c", border = "#489911" },
+        new DataModel {  Name = "node211", ReportingPerson = new string[] { "node26", "node27", "node28" }, fillColor = "#8dbe6c", border = "#489911" },
+        new DataModel {  Name = "node31", fillColor = "#e7704c", border = "#c15433" },
+        new DataModel {  Name = "node114", ReportingPerson = new string[] { "node11", "node21", "node31" }, fillColor = "#f3904a", border = "#d3722e" },
+        new DataModel {  Name = "node116", ReportingPerson = new string[] { "node12", "node22" }, fillColor = "#58b087", border = "#16955e" }
+    };
+}

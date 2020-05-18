@@ -1,0 +1,25 @@
+﻿@page "/"
+@using RiskCompiler.Shared.DTO
+@using RiskCompiler.Shared.GrpcServices
+@inject IRiskCompilerGrpcService grpcService
+
+<h1>Invoke gRPC service</h1>
+
+<p>
+    <button @ref=ReferenceToGrpcButton @onclick="GetGreeting" class="btn btn-primary">Call gRPC service</button>
+    <AutoFocus GetControl=@( () => ReferenceToGrpcButton) />
+</p>
+
+Server response: <strong>@serverResponse</strong>
+
+<Document Title="RiskCompiler" />
+
+@code {
+    ElementReference ReferenceToGrpcButton;
+    string? serverResponse;
+
+    void GetGreeting()
+    {
+        serverResponse = "Hello World!";
+    }
+}
