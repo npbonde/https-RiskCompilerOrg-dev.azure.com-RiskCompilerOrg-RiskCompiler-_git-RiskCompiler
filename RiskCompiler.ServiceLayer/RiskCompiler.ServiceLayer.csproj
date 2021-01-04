@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="9.0.0" />
-    <PackageReference Include="HtmlSanitizer" Version="5.0.319" />
+    <PackageReference Include="HtmlSanitizer" Version="5.0.372" />
   </ItemGroup>
 
   <ItemGroup>
